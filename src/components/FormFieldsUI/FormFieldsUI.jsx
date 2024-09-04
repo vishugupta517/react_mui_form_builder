@@ -1,6 +1,30 @@
+/* eslint-disable no-unused-vars */
+import {
+  Box,
+  Card,
+  CardContent,
+  IconButton,
+  Stack,
+  Typography
+} from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import ModeEditIcon from '@mui/icons-material/ModeEdit';
+import {
+  CategoryInput,
+  MultilineInput,
+  NumberRating,
+  RadioInput,
+  SingleLineInput,
+  SmileyRating,
+  StarRating
+} from './FormFieldsInput';
+import { useContext } from 'react';
+import { FormContext } from '../context/FormContext';
+
 /* eslint-disable react/prop-types */
-const FormFieldsUI = ({ data }) => {
+const FormFieldsUI = ({ data, setOpenFieldDrawer, getCurrentFieldIdType }) => {
   // console.log(data);
+
   if (!data || !data.fields) {
     console.error('Data or fields are undefined.');
     return null;
@@ -8,54 +32,100 @@ const FormFieldsUI = ({ data }) => {
 
   return (
     <form>
-      {data.fields.map((field, index) => (
-        <DynamicFormField key={index} field={field} />
-      ))}
+      <Box
+        sx={{
+          p: 1.5,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 3
+        }}
+      >
+        {data.fields.map((field, index) => (
+          <DynamicFormField
+            key={index}
+            field={field}
+            setOpenFieldDrawer={setOpenFieldDrawer}
+            getCurrentFieldIdType={getCurrentFieldIdType}
+            formId={data.id}
+          />
+        ))}
+      </Box>
     </form>
   );
 };
 
-const DynamicFormField = ({ field }) => {
-  const { label, required, type, errorMessage } = field;
+const DynamicFormField = ({ formId, field, getCurrentFieldIdType }) => {
+  const { label, required, type, errorMessage, id } = field;
+
+  const { deleteFieldInForm } = useContext(FormContext);
+
+  const handleEditClick = (id, type) => {
+    getCurrentFieldIdType(id, type);
+  };
+
+  const handleFieldDelete = () => {
+    deleteFieldInForm(formId, id);
+  };
 
   const renderInput = () => {
     switch (type) {
-      case 'single':
-        return <input type='text' placeholder={label} required={required} />;
       case 'multiline':
-        return <textarea placeholder={label} required={required}></textarea>;
+        return <MultilineInput />;
+      case 'singleLine':
+        return <SingleLineInput />;
       case 'radio':
-        return (
-          <div>
-            {field.options.map((option, index) => (
-              <label key={index}>
-                <input type='radio' name={label} required={required} />
-                {option}
-              </label>
-            ))}
-          </div>
-        );
-      case 'smiley':
-        // Example rendering for smiley rating (you might use icons here)
-        return <div>{/* Render smiley rating input */}</div>;
-      case 'star':
-        // Example rendering for star rating (you might use a star rating library)
-        return <div>{/* Render star rating input */}</div>;
-      case 'numeric':
-        return <input type='number' placeholder={label} required={required} />;
+        return <RadioInput field={field} />;
+      case 'category':
+        return <CategoryInput field={field} />;
+      case 'smileyRating':
+        return <SmileyRating />;
+      case 'starRating':
+        return <StarRating />;
+      case 'numberRating':
+        return <NumberRating />;
       default:
         return null;
     }
   };
 
   return (
-    <div className='form-group'>
-      <label>
-        {label} {required && '*'}
-      </label>
-      {renderInput()}
-      {errorMessage && <span className='error'>{errorMessage}</span>}
-    </div>
+    <Card
+      sx={{
+        width: '100%',
+        p: 1,
+        pt: 1.8,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between'
+      }}
+    >
+      <CardContent
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1,
+          p: 0,
+          flexGrow: 1
+        }}
+      >
+        <Typography variant='p' sx={{ fontSize: 14 }}>
+          {` ${required ? label + ' *' : label}`}
+        </Typography>
+        {renderInput()}
+      </CardContent>
+      <Stack
+        direction='row'
+        spacing={1}
+        sx={{ justifyContent: 'flex-end', mt: 1 }}
+      >
+        <IconButton size='small' onClick={() => handleEditClick(id, type)}>
+          <ModeEditIcon />
+        </IconButton>
+        <IconButton size='small' onClick={() => handleFieldDelete()}>
+          <DeleteIcon />
+        </IconButton>
+      </Stack>
+    </Card>
   );
 };
 

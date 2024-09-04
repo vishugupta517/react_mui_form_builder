@@ -8,33 +8,61 @@ export const FormContext = createContext();
 export const FormProvider = ({ children }) => {
   const [forms, setForms] = useState([
     {
+      id: uuidv4(),
       title: 'Example Form',
       fields: [
         {
-          label: 'Name',
+          id: uuidv4(),
+          label: 'Would you like to add a comment',
+          errorMessage: 'This  is required',
           required: true,
-          type: 'single',
-          errorMessage: 'Name is required'
-        },
-        {
-          label: 'Description',
-          required: false,
           type: 'multiline'
         },
         {
-          label: 'Gender',
+          id: uuidv4(),
+          label:
+            'How likely is it that you will recommend us to your family and friends?',
+          errorMessage: 'This  is required',
           required: true,
-          type: 'radio',
-          options: ['Male', 'Female']
+          type: 'numberRating'
         },
         {
-          label: 'Rating',
+          id: uuidv4(),
+          label: 'Give a star rating for the website',
+          errorMessage: 'This  is required',
           required: false,
-          type: 'star'
+          type: 'starRating'
+        },
+        {
+          id: uuidv4(),
+          label: 'What is  your opinion of this page?',
+          errorMessage: 'This  is required',
+          required: false,
+          type: 'smileyRating'
+        },
+        {
+          id: uuidv4(),
+          label: 'Do you have any suggestions to improve our website?',
+          required: true,
+          type: 'singleLine',
+          errorMessage: 'Name is required'
+        },
+        {
+          id: uuidv4(),
+          label: 'Multiple choice-1 answer',
+          required: true,
+          type: 'radio',
+          options: ['Radio 1', 'Radio 2', 'Radio 3']
+        },
+        {
+          id: uuidv4(),
+          label: 'Pick a subject and provide your feedback:',
+          required: true,
+          type: 'category',
+          options: ['Bug ', 'Content', 'Other']
         }
       ],
-      logic: [],
-      id: uuidv4()
+      logic: []
     }
   ]);
 
@@ -48,6 +76,10 @@ export const FormProvider = ({ children }) => {
     );
   };
 
+  const deleteForm = (id) => {
+    setForms((prevForms) => prevForms.filter((form) => form.id !== id));
+  };
+
   const addFieldToForm = (formId, newField) => {
     setForms((prev) =>
       prev.map((form) =>
@@ -58,24 +90,33 @@ export const FormProvider = ({ children }) => {
     );
   };
 
-  const updateFieldInForm = (formId, fieldIndex, updatedField) => {
+  const updateFieldInForm = (formId, fieldId, updatedField) => {
+    setForms((prev) =>
+      prev.map((form) => {
+        if (form.id === formId) {
+          console.log('Form found, updating...');
+          return {
+            ...form,
+            fields: form.fields.map((field) =>
+              field.id === fieldId ? { ...field, ...updatedField } : field
+            )
+          };
+        }
+        return form;
+      })
+    );
+  };
+
+  const deleteFieldInForm = (formId, fieldId) => {
     setForms((prev) =>
       prev.map((form) =>
         form.id === formId
           ? {
               ...form,
-              fields: form.fields.map((field, index) =>
-                index === fieldIndex ? updatedField : field
-              )
+              fields: form.fields.filter((field) => field.id !== fieldId)
             }
           : form
       )
-    );
-  };
-
-  const setTitle = (formId, title) => {
-    setForms((prev) =>
-      prev.map((form) => (form.id === formId ? { ...form, title } : form))
     );
   };
 
@@ -85,9 +126,10 @@ export const FormProvider = ({ children }) => {
         forms,
         addForm,
         updateForm,
+        deleteForm,
         addFieldToForm,
         updateFieldInForm,
-        setTitle
+        deleteFieldInForm
       }}
     >
       {children}

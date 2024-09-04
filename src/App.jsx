@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import CreateForm from './pages/CreateForm';
 import { FormProvider } from './components/context/FormContext';
+import { NavbarProvider } from './components/context/NavbarContext';
 
 const router = createBrowserRouter([
   {
@@ -31,7 +32,9 @@ function App() {
   return (
     <>
       <FormProvider>
-        <RouterProvider router={router} />
+        <NavbarProvider>
+          <RouterProvider router={router} />
+        </NavbarProvider>
       </FormProvider>
     </>
   );

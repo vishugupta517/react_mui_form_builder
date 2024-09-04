@@ -13,7 +13,7 @@ import {
   TextField
 } from '@mui/material';
 import FieldDrawer from './FieldDrawer';
-import { useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import TextFieldsOutlinedIcon from '@mui/icons-material/TextFieldsOutlined';
 import PinOutlinedIcon from '@mui/icons-material/PinOutlined';
@@ -22,6 +22,8 @@ import SentimentSatisfiedOutlinedIcon from '@mui/icons-material/SentimentSatisfi
 import InputOutlinedIcon from '@mui/icons-material/InputOutlined';
 import RadioButtonCheckedOutlinedIcon from '@mui/icons-material/RadioButtonCheckedOutlined';
 import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined';
+import { FormContext } from '../context/FormContext';
+import { v4 as uuidv4 } from 'uuid';
 
 const drawerWidth = 310;
 
@@ -34,7 +36,7 @@ const fieldOptions = [
     icon: SentimentSatisfiedOutlinedIcon,
     type: 'smileyRating'
   },
-  { label: 'Single line input', icon: InputOutlinedIcon, type: 'outlined' },
+  { label: 'Single line input', icon: InputOutlinedIcon, type: 'singleLine' },
   {
     label: 'Radio button',
     icon: RadioButtonCheckedOutlinedIcon,
@@ -43,7 +45,21 @@ const fieldOptions = [
   { label: 'Categories', icon: CategoryOutlinedIcon, type: 'category' }
 ];
 
-function FieldItem({ label, Icon, type, handleFieldType }) {
+function FieldItem({ formId, label, Icon, type, handleFieldType }) {
+  // console.log({ formId, label, Icon, type, handleFieldType });
+  const { addFieldToForm } = useContext(FormContext);
+  const handleAddField = () => {
+    const newFieldId = uuidv4();
+    const newField = { label, type, id: newFieldId };
+
+    if (type === 'radio' || type === 'category') {
+      newField.options = ['Value 1', 'Value 2', 'Value 3'];
+    }
+
+    addFieldToForm(formId, newField);
+    handleFieldType(type, newFieldId);
+  };
+
   return (
     <ListItem
       sx={{
@@ -62,7 +78,9 @@ function FieldItem({ label, Icon, type, handleFieldType }) {
       <IconButton
         edge='end'
         aria-label='add'
-        onClick={() => handleFieldType(type)}
+        onClick={() => {
+          handleAddField();
+        }}
       >
         <AddRoundedIcon color='primary' sx={{ fontSize: '28px' }} />
       </IconButton>
@@ -84,10 +102,26 @@ function ConditionSwitch({ label, checked, onChange }) {
   );
 }
 
-export default function FormDrawer() {
+export default function FormDrawer({
+  id,
+  form,
+  openFieldDrawer,
+  setOpenFieldDrawer,
+  currentFieldIdEditMode,
+  currentFieldTypeEditMode
+}) {
   const [checkedConditions, setCheckedConditions] = useState([]);
   const [isFieldActive, setIsFieldActive] = useState(false);
   const [fieldType, setFieldType] = useState('');
+  const [fieldId, setFieldId] = useState(null);
+
+  useEffect(() => {
+    if (openFieldDrawer) {
+      setIsFieldActive(true);
+      setFieldId(currentFieldIdEditMode);
+      setFieldType(currentFieldTypeEditMode);
+    }
+  }, [currentFieldIdEditMode, currentFieldTypeEditMode, openFieldDrawer]);
 
   const handleToggle = (value) => () => {
     setCheckedConditions((prev) =>
@@ -97,15 +131,24 @@ export default function FormDrawer() {
     );
   };
 
-  const handleFieldType = (type) => {
+  const handleFieldType = (type, fieldId) => {
     setFieldType(type);
     setIsFieldActive(true);
+    setFieldId(fieldId);
   };
+
+  // console.log('isFieldActive', isFieldActive);
+
   return isFieldActive ? (
     <FieldDrawer
       isFiledActive={isFieldActive}
       setIsFieldActive={setIsFieldActive}
       fieldType={fieldType}
+      fieldId={fieldId}
+      form={form}
+      formId={id}
+      openFieldDrawer={openFieldDrawer}
+      setOpenFieldDrawer={setOpenFieldDrawer}
     />
   ) : (
     <Drawer
@@ -133,6 +176,7 @@ export default function FormDrawer() {
               Icon={Icon}
               type={type}
               handleFieldType={handleFieldType}
+              formId={id}
             />
           ))}
         </List>

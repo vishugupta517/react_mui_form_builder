@@ -3,18 +3,24 @@ import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import ModeEditIcon from '@mui/icons-material/ModeEdit';
 import FormDrawer from '../components/FormDrawer/FormDrawer';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useContext } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { FormContext } from '../components/context/FormContext';
 import FormFieldsUI from '../components/FormFieldsUI/FormFieldsUI';
 import TitleDialog from '../components/Modals/TitleDialog';
 import useDialog from '../components/Hooks/useDialog';
+import { useNavbar } from '../components/context/NavbarContext';
 
 const CreateForm = () => {
-  console.log('component mounted');
+  const [currentFieldIdEditMode, setCurrentFieldIdEditMode] = useState(null);
+  const [currentFieldTypeEditMode, setCurrentFieldTypeEditMode] = useState('');
+  const [openFieldDrawer, setOpenFieldDrawer] = useState(false);
+  const { setShowButtons } = useNavbar();
   const navigate = useNavigate();
   const { forms, updateForm } = useContext(FormContext);
   const { id } = useParams();
   const form = forms.find((f) => f.id === id);
+
+  // console.log('formsArrays :', forms, 'currentForm:', form);
 
   const {
     dialogOpen,
@@ -24,19 +30,31 @@ const CreateForm = () => {
     handleDialogClose
   } = useDialog();
 
+  useEffect(() => {
+    setShowButtons(true);
+
+    return () => setShowButtons(false);
+  }, [setShowButtons]);
+
   const handleUpdateTitle = () => {
     if (form) {
       const updatedForm = { ...form, title: formTitle };
       updateForm(form.id, updatedForm);
 
-      // Update the URL with the new title
-      const formattedTitle = formTitle.replace(/ /g, '-'); // Replace spaces with hyphens
+      const formattedTitle = formTitle.replace(/ /g, '-'); // replacing spaces with hyphens
       navigate(`/dashboard/form/${formattedTitle}/${form.id}`, {
         replace: true
       });
 
       handleDialogClose();
     }
+  };
+  // console.log({ openFieldDrawer });
+  const getCurrentFieldIdType = (fieldId, type) => {
+    // console.log('EDIT FIELD ID', fieldId, type);
+    setCurrentFieldIdEditMode(fieldId);
+    setCurrentFieldTypeEditMode(type);
+    setOpenFieldDrawer(true);
   };
 
   return (
@@ -46,7 +64,7 @@ const CreateForm = () => {
           display: 'flex',
           justifyContent: 'center',
           marginLeft: '160px',
-          marginTop: 8
+          my: 8
         }}
       >
         <Card
@@ -91,10 +109,26 @@ const CreateForm = () => {
                 buttonText={'Update'}
               />
             </Box>
-            <Box>{form ? <FormFieldsUI data={form} /> : null}</Box>
+            <Box>
+              {form ? (
+                <FormFieldsUI
+                  data={form}
+                  getCurrentFieldIdType={getCurrentFieldIdType}
+                  setOpenFieldDrawer={setOpenFieldDrawer}
+                />
+              ) : null}
+            </Box>
           </Box>
         </Card>
-        <FormDrawer />
+        <FormDrawer
+          form={form}
+          id={id}
+          currentFieldIdEditMode={currentFieldIdEditMode}
+          currentFieldTypeEditMode={currentFieldTypeEditMode}
+          openFieldDrawer={openFieldDrawer}
+          setOpenFieldDrawer={setOpenFieldDrawer}
+          
+        />
       </Box>
     </>
   );

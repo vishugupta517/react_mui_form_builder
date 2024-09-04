@@ -11,39 +11,77 @@ import {
   Toolbar
 } from '@mui/material';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
+import { useContext, useEffect, useState } from 'react';
+import { FormContext } from '../context/FormContext';
 const drawerWidth = 310;
 
-const labels = [
-  {
-    type: 'multiline',
-    label: 'Heading for your  text area'
-  },
-  {
-    type: 'numberRating',
-    label: 'Heading for your  number rating'
-  },
-  {
-    type: 'starRating',
-    label: 'Heading for your  star rating'
-  },
-  {
-    type: 'smileyRating',
-    label: 'Heading for your  smiley rating'
-  },
-  {
-    type: 'outlined',
-    label: 'Single line input'
-  },
-  { type: 'radio', label: 'Heading for your category options' },
-  {
-    type: 'category',
-    label: 'Heading for your category buttons'
-  }
-];
-const FieldDrawer = ({ setIsFieldActive, fieldType }) => {
-  const fieldLabel = labels.find((field) => field.type === fieldType);
+const FieldDrawer = ({
+  form,
+  formId,
+  fieldId,
+  setIsFieldActive,
+  fieldType,
+  setOpenFieldDrawer
+}) => {
+  const [inputText, setInputText] = useState({
+    label: '',
+    required: false,
+    errorMessage: ''
+  });
+
+  const [radioInput, setRadioInput] = useState(['', '', '']);
+
+  const { updateFieldInForm } = useContext(FormContext);
+  // console.log(form);
+  const currentField = form.fields.find((field) => field.id === fieldId);
+  // console.log({ currentField });
+
+  useEffect(() => {
+    if (currentField) {
+      setInputText({
+        label: currentField.label || '',
+        required: currentField.required || false,
+        errorMessage: currentField.errorMessage || ''
+      });
+
+      if (fieldType === 'radio' || fieldType === 'category') {
+        setRadioInput(currentField.options || ['', '', '']);
+      }
+    }
+  }, [currentField, fieldType]);
+
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    const inputValue = type === 'checkbox' ? checked : value;
+    setInputText((prevInput) => ({ ...prevInput, [name]: inputValue }));
+  };
+
+  const handleRadioInputChange = (index, value) => {
+    setRadioInput((prevInput) => {
+      const updatedInput = [...prevInput];
+      updatedInput[index] = value;
+      return updatedInput;
+    });
+  };
+
+  const handleSave = () => {
+    if (inputText.label !== '') {
+      const updatedField = { ...inputText };
+
+      if (fieldType === 'radio' || fieldType === 'category') {
+        updatedField.options = radioInput;
+      }
+
+      updateFieldInForm(formId, currentField.id, updatedField);
+    } else {
+      alert('Label is empty');
+    }
+  };
+
+  // console.log(radioInput);
   return (
     <Drawer
+      // open={openFieldDrawer}
       variant='permanent'
       anchor='right'
       sx={{
@@ -68,6 +106,7 @@ const FieldDrawer = ({ setIsFieldActive, fieldType }) => {
           startIcon={<ArrowBackIosIcon />}
           onClick={() => {
             setIsFieldActive(false);
+            setOpenFieldDrawer(false);
           }}
         >
           Back to Add Fields
@@ -75,21 +114,31 @@ const FieldDrawer = ({ setIsFieldActive, fieldType }) => {
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <TextField
             id='filled-helperText'
+            name='label'
             label='Label'
-            defaultValue={`${fieldLabel.label}`}
+            placeholder='Heading for your text area'
+            value={inputText.label}
+            onChange={handleInputChange}
             variant='standard'
             fullWidth
             InputProps={{
-              sx: { fontSize: '14px' } // Change the font size for the input text
+              sx: { fontSize: '14px' }
             }}
           />
           <FormGroup>
             <FormControlLabel
-              control={<Switch size='small' />}
+              control={
+                <Switch
+                  size='small '
+                  name='required'
+                  checked={inputText.required}
+                  onChange={handleInputChange}
+                />
+              }
               label='Required'
               sx={{
                 '& .MuiFormControlLabel-label': {
-                  fontSize: '12px' // Change the font size for the label
+                  fontSize: '12px'
                 }
               }}
             />
@@ -97,82 +146,52 @@ const FieldDrawer = ({ setIsFieldActive, fieldType }) => {
           <TextField
             id='filled-helperText'
             label='Error message'
-            defaultValue='Write you error message'
+            name='errorMessage'
+            placeholder='Write your error message here'
+            value={inputText.errorMessage}
+            onChange={handleInputChange}
             variant='standard'
             fullWidth
             InputProps={{
-              sx: { fontSize: '14px' } // Change the font size for the input text
+              sx: { fontSize: '14px' }
             }}
           />
         </Box>
 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, my: 3 }}>
-          {fieldType && fieldType === 'radio' ? (
+          {(fieldType === 'radio' || fieldType === 'category') && (
             <>
-              <TextField
-                id='standard-basic'
-                label='Options'
-                defaultValue='Radio 1'
-                variant='standard'
-                InputProps={{
-                  sx: { fontSize: '14px' } // Change the font size for the input text
-                }}
-              />
-              <TextField
-                id='standard-basic'
-                defaultValue='Radio 2'
-                variant='standard'
-                InputProps={{
-                  sx: { fontSize: '14px' } // Change the font size for the input text
-                }}
-              />
-              <TextField
-                id='standard-basic'
-                defaultValue='Radio 3'
-                variant='standard'
-                InputProps={{
-                  sx: { fontSize: '14px' } // Change the font size for the input text
-                }}
-              />
+              {radioInput.map((option, index) => (
+                <TextField
+                  key={index}
+                  id={`standard-basic-${index}`}
+                  label={`Option ${index + 1}`}
+                  placeholder={`${
+                    fieldType === 'radio' ? 'Radio' : 'Category'
+                  } ${index + 1}`}
+                  value={option}
+                  onChange={(e) =>
+                    handleRadioInputChange(index, e.target.value)
+                  }
+                  variant='standard'
+                  InputProps={{
+                    sx: { fontSize: '14px' }
+                  }}
+                />
+              ))}
             </>
-          ) : fieldType === 'category' ? (
-            <>
-              <TextField
-                id='standard-basic'
-                label='Options'
-                defaultValue='category 1'
-                variant='standard'
-                InputProps={{
-                  sx: { fontSize: '14px' } // Change the font size for the input text
-                }}
-              />
-              <TextField
-                id='standard-basic'
-                defaultValue='category 2'
-                variant='standard'
-                InputProps={{
-                  sx: { fontSize: '14px' } // Change the font size for the input text
-                }}
-              />
-              <TextField
-                id='standard-basic'
-                defaultValue='category 3'
-                variant='standard'
-                InputProps={{
-                  sx: { fontSize: '14px' } // Change the font size for the input text
-                }}
-              />
-            </>
-          ) : fieldType === 'starRating' ? (
-            <Box></Box>
-          ) : fieldType === 'smileyRating' ? (
-            <Box></Box>
-          ) : fieldType === 'numberRating' ? (
-            <Box></Box>
-          ) : null}
+          )}
         </Box>
         <Stack spacing={2} direction='row'>
-          <Button variant='contained' color='info'>
+          <Button
+            variant='contained'
+            color='info'
+            onClick={() => {
+              handleSave();
+              setIsFieldActive(false);
+              setOpenFieldDrawer(false);
+            }}
+          >
             Save
           </Button>
           <Button
@@ -180,6 +199,7 @@ const FieldDrawer = ({ setIsFieldActive, fieldType }) => {
             color='error'
             onClick={() => {
               setIsFieldActive(false);
+              setOpenFieldDrawer(false);
             }}
           >
             Cancel

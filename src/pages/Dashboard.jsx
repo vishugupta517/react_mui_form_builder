@@ -40,7 +40,13 @@ const Dashboard = () => {
   return (
     <Box
       component='main'
-      sx={{ m: 4, display: 'flex', flexWrap: 'wrap', gap: 2, marginTop: 15 }}
+      sx={{
+        m: 4,
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 2,
+        marginTop: 15
+      }}
     >
       <Card
         sx={{
@@ -72,16 +78,14 @@ const Dashboard = () => {
           buttonText={'Create'}
         />
       </Card>
-      <Box component='div' sx={{ display: 'flex', gap: 2 }}>
-        {forms.map((form) => (
-          <FormCard
-            key={form.id}
-            form={form}
-            handleAddForm={handleAddForm}
-            setTitle={setTitle}
-          />
-        ))}
-      </Box>
+      {forms.map((form) => (
+        <FormCard
+          key={form.id}
+          form={form}
+          handleAddForm={handleAddForm}
+          setTitle={setTitle}
+        />
+      ))}
     </Box>
   );
 };

@@ -3,11 +3,18 @@ import { Box, Card, CardContent, Stack, Typography } from '@mui/material';
 import formCardImg from '../../assets/images/formCardImg.png';
 import CustomButton from '../ui/Button';
 import { useNavigate } from 'react-router-dom';
+import { useContext } from 'react';
+import { FormContext } from '../context/FormContext';
 
 const FormCard = ({ form }) => {
   // console.log(form);
   const { title, id } = form;
+  const { deleteForm } = useContext(FormContext);
   const navigate = useNavigate();
+
+  const handleDeleteForm = () => {
+    deleteForm(id);
+  };
 
   const handleEditForm = () => {
     navigate(`/dashboard/form/${title.replace(/ /g, '-')}/${id}`);
@@ -105,6 +112,7 @@ const FormCard = ({ form }) => {
               variant='contained'
               w={99}
               text='DELETE'
+              onClick={() => handleDeleteForm()}
             />
           </Box>
         </Box>
